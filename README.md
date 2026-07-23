@@ -17,3 +17,8 @@ Landing page with a requirements form, generated from Brotea's
 
 ## Commands
 - `npm install` · `npm run dev` · `npm run build` (output in `dist/`)
+
+## Documentation
+- [Requirements form (`/`)](docs/form.md) — fields, endpoint payload, and
+  submit states (idle → Sending... → Thank you!/error), including the
+  double-submit guard.
