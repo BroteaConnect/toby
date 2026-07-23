@@ -46,7 +46,8 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT ?? '';
     <script>
       const form = document.getElementById('requirements-form');
       const status = document.getElementById('form-status');
-      form.addEventListener('submit', async (e) => {
+      const button = form?.querySelector('button[type="submit"]');
+      form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const endpoint = form.dataset.endpoint;
         if (!endpoint) {
@@ -54,7 +55,8 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT ?? '';
           return;
         }
         const data = Object.fromEntries(new FormData(form));
-        status.textContent = 'Sending…';
+        status.textContent = 'Sending...';
+        if (button) button.disabled = true;
         try {
           const res = await fetch(endpoint, {
             method: 'POST',
@@ -71,6 +73,8 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT ?? '';
           status.textContent = 'Thank you! We received your input.';
         } catch {
           status.textContent = 'Something went wrong — please try again later.';
+        } finally {
+          if (button) button.disabled = false;
         }
       });
     </script>
