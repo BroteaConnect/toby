@@ -15,3 +15,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # The form is dead if the endpoint is not inlined into the bundle at
+      # build time (feature 13). A green build alone never caught that.
+      - name: Assert the requirements endpoint is baked into the bundle
+        run: grep -q 'data-endpoint="https://[^"]\+"' dist/index.html

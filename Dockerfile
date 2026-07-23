@@ -4,6 +4,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Optional override for the requirements endpoint. Must be declared in this
+# stage: ARGs are not inherited across FROM. Defaults to the URL compiled
+# into src/pages/index.astro when left empty.
+ARG PUBLIC_REQUIREMENTS_ENDPOINT=""
+ENV PUBLIC_REQUIREMENTS_ENDPOINT=$PUBLIC_REQUIREMENTS_ENDPOINT
 RUN npm run build
 
 FROM nginx:alpine

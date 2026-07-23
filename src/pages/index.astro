@@ -3,7 +3,12 @@ const PROJECT_NAME = 'Toby';
 const PROJECT_SLUG = 'toby';
 const PROJECT_DESCRIPTION = 'Landing page';
 // Endpoint that receives requirement submissions (Brotea bot/orchestrator).
-const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT ?? '';
+// Public, unauthenticated Brotea endpoint. Override at build time with
+// PUBLIC_REQUIREMENTS_ENDPOINT if this site should post elsewhere.
+// Keep `||`, never `??`: the Dockerfile defaults the ARG to an empty string,
+// which is not nullish, so `??` would ship an empty endpoint again.
+const DEFAULT_ENDPOINT = 'https://api.brotea.dev/requirements';
+const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT?.trim() || DEFAULT_ENDPOINT;
 ---
 
 <html lang="en">
@@ -49,6 +54,7 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT ?? '';
       const button = form?.querySelector('button[type="submit"]');
       form?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!status) return;
         const endpoint = form.dataset.endpoint;
         if (!endpoint) {
           status.textContent = 'Submissions are not enabled yet.';
@@ -67,16 +73,32 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT ?? '';
               submitted_by: `${data.name} <${data.email}>`,
               content: data.content,
             }),
+            // Without a deadline a blackholed API never settles the promise:
+            // `finally` never runs and the form stays stuck on 'Sending...'.
+            signal: AbortSignal.timeout(15000),
           });
-          if (!res.ok) throw new Error(String(res.status));
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           form.reset();
           status.textContent = 'Thank you! We received your input.';
-        } catch {
-          status.textContent = 'Something went wrong — please try again later.';
+        } catch (err) {
+          console.error('Requirements submission failed:', err);
+          status.textContent = describeFailure(err);
         } finally {
           if (button) button.disabled = false;
         }
       });
+
+      function describeFailure(err) {
+        const name = err instanceof DOMException ? err.name : '';
+        if (name === 'TimeoutError' || name === 'AbortError') {
+          return 'That took too long - please try again in a moment.';
+        }
+        if (err instanceof Error && err.message === 'HTTP 429') {
+          return 'Too many submissions - please wait a minute and try again.';
+        }
+        const detail = err instanceof Error && err.message ? ` (${err.message})` : '';
+        return `Something went wrong${detail} - please try again later.`;
+      }
     </script>
 
     <style>
