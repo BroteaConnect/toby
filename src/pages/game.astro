@@ -1,0 +1,297 @@
+---
+const PROJECT_NAME = 'Toby';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{PROJECT_NAME} — Flappy Toilet</title>
+    <meta name="description" content="Flappy Toilet — a tiny canvas game." />
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <h1>Flappy Toilet 🚽</h1>
+        <p>Tap, click or press Space to flap. Avoid the pipes!</p>
+      </section>
+
+      <section class="game-card">
+        <div class="canvas-wrap">
+          <canvas
+            id="game"
+            width="360"
+            height="540"
+            tabindex="0"
+            aria-label="Flappy Toilet game. Press Space, click or tap to flap."
+          ></canvas>
+        </div>
+        <p id="hint">Click the game and press Space / tap to start. Press R to restart.</p>
+        <p class="back"><a href="/">← Back</a></p>
+      </section>
+    </main>
+
+    <script>
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+
+      // Fixed internal (logical) resolution — physics live in these units.
+      const LOGICAL_W = 360;
+      const LOGICAL_H = 540;
+
+      // Config
+      const CFG = {
+        gravity: 1400,      // px / s^2
+        flap: -420,         // px / s impulse
+        pipeGap: 150,       // vertical gap
+        pipeWidth: 60,
+        pipeSpacing: 220,   // horizontal distance between pipes
+        scrollSpeed: 150,   // px / s
+        playerX: 90,
+        playerR: 16,        // collision half-size
+      };
+
+      const HS_KEY = 'toby.flappy.highscore';
+
+      function readHighScore() {
+        try {
+          return parseInt(localStorage.getItem(HS_KEY) || '0', 10) || 0;
+        } catch {
+          return 0;
+        }
+      }
+      function writeHighScore(v) {
+        try {
+          localStorage.setItem(HS_KEY, String(v));
+        } catch {
+          /* private mode — ignore */
+        }
+      }
+
+      let highScore = readHighScore();
+
+      let state = 'ready'; // 'ready' | 'playing' | 'over'
+      let toilet;
+      let pipes;
+      let score;
+      let spawnAcc;
+
+      function reset() {
+        toilet = { y: LOGICAL_H / 2, v: 0 };
+        pipes = [];
+        score = 0;
+        spawnAcc = 0;
+        state = 'ready';
+      }
+
+      function spawnPipe() {
+        const margin = 60;
+        const gapY = margin + Math.random() * (LOGICAL_H - CFG.pipeGap - margin * 2);
+        pipes.push({ x: LOGICAL_W, gapY, passed: false });
+      }
+
+      function startOrFlap() {
+        if (state === 'ready') {
+          state = 'playing';
+          toilet.v = CFG.flap;
+        } else if (state === 'playing') {
+          toilet.v = CFG.flap;
+        } else if (state === 'over') {
+          reset();
+        }
+      }
+
+      // HiDPI scaling: scale the backing store, keep drawing in logical units.
+      function setupHiDPI() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = LOGICAL_W * dpr;
+        canvas.height = LOGICAL_H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      setupHiDPI();
+
+      // ---- Input ----
+      function onFlap(e) {
+        if (e) e.preventDefault();
+        canvas.focus();
+        startOrFlap();
+      }
+      canvas.addEventListener('click', onFlap);
+      canvas.addEventListener('touchstart', onFlap, { passive: false });
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+          e.preventDefault();
+          startOrFlap();
+        } else if (e.code === 'KeyR') {
+          e.preventDefault();
+          reset();
+        }
+      });
+
+      // ---- Collision ----
+      function collides() {
+        const px = CFG.playerX;
+        const py = toilet.y;
+        const r = CFG.playerR;
+        // floor / ceiling
+        if (py - r < 0 || py + r > LOGICAL_H) return true;
+        for (const p of pipes) {
+          const withinX = px + r > p.x && px - r < p.x + CFG.pipeWidth;
+          if (withinX) {
+            const topH = p.gapY;
+            const botY = p.gapY + CFG.pipeGap;
+            if (py - r < topH || py + r > botY) return true;
+          }
+        }
+        return false;
+      }
+
+      // ---- Update ----
+      function update(dt) {
+        if (state !== 'playing') return;
+
+        toilet.v += CFG.gravity * dt;
+        toilet.y += toilet.v * dt;
+
+        spawnAcc += CFG.scrollSpeed * dt;
+        if (pipes.length === 0 || spawnAcc >= CFG.pipeSpacing) {
+          spawnAcc = 0;
+          spawnPipe();
+        }
+
+        for (const p of pipes) {
+          p.x -= CFG.scrollSpeed * dt;
+          if (!p.passed && p.x + CFG.pipeWidth < CFG.playerX) {
+            p.passed = true;
+            score += 1;
+          }
+        }
+        pipes = pipes.filter((p) => p.x + CFG.pipeWidth > -10);
+
+        if (collides()) {
+          state = 'over';
+          if (score > highScore) {
+            highScore = score;
+            writeHighScore(highScore);
+          }
+        }
+      }
+
+      // ---- Draw ----
+      function drawPipes() {
+        ctx.fillStyle = '#1a7f37';
+        for (const p of pipes) {
+          ctx.fillRect(p.x, 0, CFG.pipeWidth, p.gapY);
+          const botY = p.gapY + CFG.pipeGap;
+          ctx.fillRect(p.x, botY, CFG.pipeWidth, LOGICAL_H - botY);
+        }
+      }
+
+      function drawToilet() {
+        ctx.font = '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const glyph = '🚽';
+        const m = ctx.measureText(glyph);
+        if (m && m.width > 0) {
+          ctx.fillText(glyph, CFG.playerX, toilet.y);
+        } else {
+          // Fallback if emoji has zero metrics.
+          ctx.fillStyle = '#3178c6';
+          ctx.fillRect(CFG.playerX - CFG.playerR, toilet.y - CFG.playerR, CFG.playerR * 2, CFG.playerR * 2);
+        }
+      }
+
+      function drawCenteredText(lines, yStart, big) {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let y = yStart;
+        for (const line of lines) {
+          ctx.font = ((line.big ?? big) ? 'bold 26px system-ui, sans-serif' : '16px system-ui, sans-serif');
+          ctx.fillText(line.text ?? line, LOGICAL_W / 2, y);
+          y += 34;
+        }
+      }
+
+      function draw() {
+        // background
+        ctx.fillStyle = '#dff1ff';
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+        drawPipes();
+        drawToilet();
+
+        if (state === 'playing') {
+          ctx.fillStyle = '#1a1a1a';
+          ctx.font = 'bold 28px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(String(score), LOGICAL_W / 2, 16);
+        } else if (state === 'ready') {
+          drawCenteredText(
+            [
+              { text: 'Flappy Toilet 🚽', big: true },
+              'Click / tap / Space to start',
+              'Best: ' + highScore,
+            ],
+            LOGICAL_H / 2 - 40,
+            false
+          );
+        } else if (state === 'over') {
+          drawCenteredText(
+            [
+              { text: 'Game Over', big: true },
+              'Score: ' + score,
+              'Best: ' + highScore,
+              'Press R / click / tap to retry',
+            ],
+            LOGICAL_H / 2 - 55,
+            false
+          );
+        }
+      }
+
+      // ---- Loop ----
+      let last = performance.now();
+      function frame(now) {
+        let dt = (now - last) / 1000;
+        last = now;
+        if (dt > 0.05) dt = 0.05; // clamp after tab switch
+        update(dt);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      reset();
+      canvas.focus();
+      requestAnimationFrame(frame);
+    </script>
+
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, sans-serif; color: #1a1a1a; background: #fafafa; }
+      main { max-width: 640px; margin: 0 auto; padding: 4rem 1.5rem; }
+      .hero h1 { font-size: 2.5rem; margin: 0 0 .5rem; }
+      .hero p { font-size: 1.15rem; color: #444; }
+      .game-card { margin-top: 2rem; background: #fff; border: 1px solid #e2e2e2; border-radius: 12px; padding: 1.5rem; }
+      .canvas-wrap { max-width: 420px; margin: 0 auto; }
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 360 / 540;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background: #dff1ff;
+        touch-action: none;
+        cursor: pointer;
+      }
+      canvas:focus { outline: 2px solid #1a7f37; outline-offset: 2px; }
+      #hint { color: #555; text-align: center; margin-top: 1rem; }
+      .back { text-align: center; margin: .5rem 0 0; }
+      .back a { color: #1a7f37; font-weight: 600; text-decoration: none; }
+      .back a:hover { text-decoration: underline; }
+    </style>
+  </body>
+</html>
