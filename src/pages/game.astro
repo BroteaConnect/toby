@@ -208,7 +208,7 @@ const PROJECT_NAME = 'Toby';
         ctx.textBaseline = 'middle';
         let y = yStart;
         for (const line of lines) {
-          ctx.font = (line.big ?? big ? 'bold 26px system-ui, sans-serif' : '16px system-ui, sans-serif');
+          ctx.font = ((line.big ?? big) ? 'bold 26px system-ui, sans-serif' : '16px system-ui, sans-serif');
           ctx.fillText(line.text ?? line, LOGICAL_W / 2, y);
           y += 34;
         }
@@ -236,7 +236,7 @@ const PROJECT_NAME = 'Toby';
               'Best: ' + highScore,
             ],
             LOGICAL_H / 2 - 40,
-            true
+            false
           );
         } else if (state === 'over') {
           drawCenteredText(
@@ -247,7 +247,7 @@ const PROJECT_NAME = 'Toby';
               'Press R / click / tap to retry',
             ],
             LOGICAL_H / 2 - 55,
-            true
+            false
           );
         }
       }
