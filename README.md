@@ -1,7 +1,7 @@
 # Toby
 
-Landing page with a requirements form, generated from Brotea's
-`landing-astro` template.
+Landing page with a requirements form and a public roadmap, generated
+from Brotea's `landing-astro` template.
 
 ## Template placeholders (replaced by the new-project skill)
 - `__PROJECT_NAME__` — human-readable project name
@@ -41,3 +41,8 @@ Landing page with a requirements form, generated from Brotea's
   submit states (idle → Sending... → Thank you!/error), including the
   double-submit guard, the build-time vs runtime endpoint rules, and how to
   verify the endpoint is baked into the bundle.
+- [Public roadmap (`/roadmap`)](docs/roadmap.md) — self-contained page that
+  fetches `https://api.brotea.dev/roadmap?project=toby` client-side (8s
+  timeout) and renders Planned / In progress / Shipped columns, with the
+  loading/empty/error states and two style gotchas (`:global()` for
+  client-created nodes, explicit `.columns[hidden]`).
