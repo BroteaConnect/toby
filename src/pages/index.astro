@@ -24,6 +24,7 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT?.trim() || DEFAULT
         <h1>{PROJECT_NAME}</h1>
         <p>{PROJECT_DESCRIPTION}</p>
         <p class="hero-cta"><a href="/game">Play the game 🚽</a></p>
+        <p class="roadmap-link"><a href="/roadmap">Roadmap</a></p>
       </section>
 
       <section class="form-card">
@@ -107,6 +108,7 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT?.trim() || DEFAULT
       main { max-width: 640px; margin: 0 auto; padding: 4rem 1.5rem; }
       .hero h1 { font-size: 2.5rem; margin: 0 0 .5rem; }
       .hero p { font-size: 1.15rem; color: #444; }
+      .roadmap-link a { color: #1a7f37; font-weight: 600; }
       .hero-cta a { color: #1a7f37; font-weight: 600; text-decoration: none; }
       .hero-cta a:hover { text-decoration: underline; }
       .form-card { margin-top: 3rem; background: #fff; border: 1px solid #e2e2e2; border-radius: 12px; padding: 2rem; }
