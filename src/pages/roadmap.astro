@@ -1,0 +1,112 @@
+---
+// Self-contained public roadmap page: no Layout, no React island, no env vars.
+// It must work in bare landing-astro projects, so everything (markup, fetch
+// logic, styles) lives in this one file. The installer replaces the
+// placeholders below (the CLI copies files verbatim; substitution is the
+// agent's job, same as the stack-template placeholders).
+const PROJECT_NAME = 'Toby';
+const PROJECT_SLUG = 'toby';
+const ENDPOINT = `https://api.brotea.dev/roadmap?project=${PROJECT_SLUG}`;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roadmap — {PROJECT_NAME}</title>
+    <meta name="description" content={`Public roadmap for ${PROJECT_NAME}`} />
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <h1>Roadmap</h1>
+        <p>What we're building for {PROJECT_NAME} — and what has already shipped.</p>
+        <p><a href="/">&larr; Back to home</a></p>
+      </section>
+
+      <section id="roadmap" data-endpoint={ENDPOINT}>
+        <p id="roadmap-status" role="status">Loading roadmap…</p>
+        <div class="columns" hidden>
+          <div class="column" data-status="planned">
+            <h2>Planned</h2>
+            <ul></ul>
+          </div>
+          <div class="column" data-status="in_progress">
+            <h2>In progress</h2>
+            <ul></ul>
+          </div>
+          <div class="column" data-status="shipped">
+            <h2>Shipped</h2>
+            <ul></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const root = document.getElementById('roadmap');
+      const status = document.getElementById('roadmap-status');
+      const columns = root.querySelector('.columns');
+
+      function render(items) {
+        const cols = [...columns.querySelectorAll('.column')];
+        for (const item of items) {
+          const list = cols.find((c) => c.dataset.status === item.status)?.querySelector('ul');
+          if (!list) continue;
+          const li = document.createElement('li');
+          const title = document.createElement('strong');
+          title.textContent = item.title;
+          li.appendChild(title);
+          if (item.description) {
+            const p = document.createElement('p');
+            p.textContent = item.description;
+            li.appendChild(p);
+          }
+          list.appendChild(li);
+        }
+        for (const col of columns.querySelectorAll('.column')) {
+          if (!col.querySelector('li')) {
+            const li = document.createElement('li');
+            li.className = 'empty';
+            li.textContent = 'Nothing here yet.';
+            col.querySelector('ul').appendChild(li);
+          }
+        }
+      }
+
+      (async () => {
+        try {
+          const res = await fetch(root.dataset.endpoint, { signal: AbortSignal.timeout(8000) });
+          if (!res.ok) throw new Error(String(res.status));
+          const data = await res.json();
+          render(data.items ?? []);
+          status.hidden = true;
+          columns.hidden = false;
+        } catch {
+          status.textContent = 'The roadmap is not available right now — please check back later.';
+        }
+      })();
+    </script>
+
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, sans-serif; color: #1a1a1a; background: #fafafa; }
+      main { max-width: 960px; margin: 0 auto; padding: 4rem 1.5rem; }
+      .hero h1 { font-size: 2.5rem; margin: 0 0 .5rem; }
+      .hero p { font-size: 1.15rem; color: #444; }
+      .hero a { color: #1a7f37; }
+      .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 2rem; }
+      .columns[hidden] { display: none; }
+      .column { background: #fff; border: 1px solid #e2e2e2; border-radius: 12px; padding: 1.25rem; }
+      .column h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
+      .column ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+      /* Items are created client-side, so they lack Astro's scope attribute —
+         these rules must be global to reach them. */
+      .column :global(li) { border: 1px solid #eee; border-radius: 8px; padding: .75rem; background: #fafafa; }
+      .column :global(li p) { margin: .35rem 0 0; font-size: .9rem; color: #555; }
+      .column :global(li.empty) { border-style: dashed; color: #888; font-size: .9rem; }
+      [data-status="shipped"] h2 { color: #1a7f37; }
+      #roadmap-status { color: #555; }
+    </style>
+  </body>
+</html>
