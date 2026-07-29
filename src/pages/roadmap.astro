@@ -1,4 +1,5 @@
 ---
+import '../styles/theme.css';
 // Self-contained public roadmap page: no Layout, no React island, no env vars.
 // It must work in bare landing-astro projects, so everything (markup, fetch
 // logic, styles) lives in this one file. The installer replaces the
@@ -90,23 +91,23 @@ const ENDPOINT = `https://api.brotea.dev/roadmap?project=${PROJECT_SLUG}`;
 
     <style>
       * { box-sizing: border-box; }
-      body { margin: 0; font-family: system-ui, sans-serif; color: #1a1a1a; background: #fafafa; }
+      body { margin: 0; font-family: var(--font-sans); color: var(--text); background: var(--bg); }
       main { max-width: 960px; margin: 0 auto; padding: 4rem 1.5rem; }
       .hero h1 { font-size: 2.5rem; margin: 0 0 .5rem; }
-      .hero p { font-size: 1.15rem; color: #444; }
+      .hero p { font-size: 1.15rem; color: var(--muted); }
       .hero a { color: #1a7f37; }
       .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 2rem; }
       .columns[hidden] { display: none; }
-      .column { background: #fff; border: 1px solid #e2e2e2; border-radius: 12px; padding: 1.25rem; }
+      .column { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
       .column h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
       .column ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
       /* Items are created client-side, so they lack Astro's scope attribute —
          these rules must be global to reach them. */
-      .column :global(li) { border: 1px solid #eee; border-radius: 8px; padding: .75rem; background: #fafafa; }
-      .column :global(li p) { margin: .35rem 0 0; font-size: .9rem; color: #555; }
+      .column :global(li) { border: 1px solid #eee; border-radius: var(--radius); padding: .75rem; background: var(--bg); }
+      .column :global(li p) { margin: .35rem 0 0; font-size: .9rem; color: var(--muted); }
       .column :global(li.empty) { border-style: dashed; color: #888; font-size: .9rem; }
       [data-status="shipped"] h2 { color: #1a7f37; }
-      #roadmap-status { color: #555; }
+      #roadmap-status { color: var(--muted); }
     </style>
   </body>
 </html>
