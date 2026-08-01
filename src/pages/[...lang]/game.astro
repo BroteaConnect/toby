@@ -1,20 +1,25 @@
 ---
-import '../styles/theme.css';
+import LanguageSwitcher from '../../components/LanguageSwitcher.astro';
+import { dirOf, localePath, localePaths, t } from '../../lib/i18n';
+import '../../styles/theme.css';
+
+export const getStaticPaths = localePaths;
+const { locale } = Astro.props;
 const PROJECT_NAME = 'Toby';
 ---
 
-<html lang="en">
+<html lang={locale} dir={dirOf(locale)}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{PROJECT_NAME} — Flappy Toilet</title>
-    <meta name="description" content="Flappy Toilet — a tiny canvas game." />
+    <title>{t(locale, 'game.pageTitle', { name: PROJECT_NAME })}</title>
+    <meta name="description" content={t(locale, 'game.meta')} />
   </head>
   <body>
     <main>
       <section class="hero">
-        <h1>Flappy Toilet 🚽</h1>
-        <p>Tap, click or press Space to flap. Avoid the pipes!</p>
+        <h1>{t(locale, 'game.title')}</h1>
+        <p>{t(locale, 'game.help')}</p>
       </section>
 
       <section class="game-card">
@@ -24,11 +29,12 @@ const PROJECT_NAME = 'Toby';
             width="360"
             height="540"
             tabindex="0"
-            aria-label="Flappy Toilet game. Press Space, click or tap to flap."
+            aria-label={t(locale, 'game.aria')}
           ></canvas>
         </div>
-        <p id="hint">Click the game and press Space / tap to start. Press R to restart.</p>
-        <p class="back"><a href="/">← Back</a></p>
+        <p id="hint" data-msg-title={t(locale, 'game.title')} data-msg-start={t(locale, 'game.start')} data-msg-best={t(locale, 'game.best')} data-msg-over={t(locale, 'game.over')} data-msg-score={t(locale, 'game.score')} data-msg-retry={t(locale, 'game.retry')}>{t(locale, 'game.hint')}</p>
+        <p class="back"><a href={localePath(locale, '/')}>{t(locale, 'game.back')}</a></p>
+        <LanguageSwitcher locale={locale} />
       </section>
     </main>
 
@@ -232,9 +238,9 @@ const PROJECT_NAME = 'Toby';
         } else if (state === 'ready') {
           drawCenteredText(
             [
-              { text: 'Flappy Toilet 🚽', big: true },
-              'Click / tap / Space to start',
-              'Best: ' + highScore,
+              { text: MSG.msgTitle, big: true },
+              MSG.msgStart,
+              MSG.msgBest + highScore,
             ],
             LOGICAL_H / 2 - 40,
             false
@@ -242,16 +248,20 @@ const PROJECT_NAME = 'Toby';
         } else if (state === 'over') {
           drawCenteredText(
             [
-              { text: 'Game Over', big: true },
-              'Score: ' + score,
-              'Best: ' + highScore,
-              'Press R / click / tap to retry',
+              { text: MSG.msgOver, big: true },
+              MSG.msgScore + score,
+              MSG.msgBest + highScore,
+              MSG.msgRetry,
             ],
             LOGICAL_H / 2 - 55,
             false
           );
         }
       }
+
+      // Un solo bundle sirve todas las rutas, así que los textos del canvas
+      // llegan en data-* renderizados en servidor (como el idioma de <html>).
+      const MSG = document.getElementById('hint').dataset;
 
       // ---- Loop ----
       let last = performance.now();

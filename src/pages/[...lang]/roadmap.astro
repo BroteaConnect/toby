@@ -1,5 +1,4 @@
 ---
-import '../styles/theme.css';
 // Self-contained public roadmap page: no Layout, no React island, no env vars.
 // It must work in bare landing-astro projects, so everything (markup, fetch
 // logic, styles) lives in this one file. The installer replaces the
@@ -8,38 +7,45 @@ import '../styles/theme.css';
 const PROJECT_NAME = 'Toby';
 const PROJECT_SLUG = 'toby';
 const ENDPOINT = `https://api.brotea.dev/roadmap?project=${PROJECT_SLUG}`;
+import '../../styles/theme.css';
+import { dirOf, localePath, localePaths, t } from '../../lib/i18n';
+
+export const getStaticPaths = localePaths;
+const { locale } = Astro.props;
+const COLUMNS = ['planned', 'in_progress', 'shipped'] as const;
 ---
 
-<html lang="en">
+<html lang={locale} dir={dirOf(locale)}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Roadmap — {PROJECT_NAME}</title>
-    <meta name="description" content={`Public roadmap for ${PROJECT_NAME}`} />
+    <title>{t(locale, 'roadmap.title')} — {PROJECT_NAME}</title>
+    <meta name="description" content={t(locale, 'roadmap.subtitle')} />
   </head>
   <body>
     <main>
       <section class="hero">
-        <h1>Roadmap</h1>
-        <p>What we're building for {PROJECT_NAME} — and what has already shipped.</p>
-        <p><a href="/">&larr; Back to home</a></p>
+        <h1>{t(locale, 'roadmap.title')}</h1>
+        <p>{t(locale, 'roadmap.subtitle')}</p>
+        <p><a href={localePath(locale, '/')}>{t(locale, 'roadmap.back')}</a></p>
       </section>
 
-      <section id="roadmap" data-endpoint={ENDPOINT}>
-        <p id="roadmap-status" role="status">Loading roadmap…</p>
+      <!-- The client script is shared by every locale, so its runtime strings
+           travel as data-* attributes rendered server-side. -->
+      <section
+        id="roadmap"
+        data-endpoint={ENDPOINT}
+        data-msg-error={t(locale, 'roadmap.error')}
+        data-msg-empty={t(locale, 'roadmap.empty')}
+      >
+        <p id="roadmap-status" role="status">{t(locale, 'roadmap.loading')}</p>
         <div class="columns" hidden>
-          <div class="column" data-status="planned">
-            <h2>Planned</h2>
-            <ul></ul>
-          </div>
-          <div class="column" data-status="in_progress">
-            <h2>In progress</h2>
-            <ul></ul>
-          </div>
-          <div class="column" data-status="shipped">
-            <h2>Shipped</h2>
-            <ul></ul>
-          </div>
+          {COLUMNS.map((status) => (
+            <div class="column" data-status={status}>
+              <h2>{t(locale, `roadmap.column.${status}`)}</h2>
+              <ul></ul>
+            </div>
+          ))}
         </div>
       </section>
     </main>
@@ -69,7 +75,7 @@ const ENDPOINT = `https://api.brotea.dev/roadmap?project=${PROJECT_SLUG}`;
           if (!col.querySelector('li')) {
             const li = document.createElement('li');
             li.className = 'empty';
-            li.textContent = 'Nothing here yet.';
+            li.textContent = root.dataset.msgEmpty;
             col.querySelector('ul').appendChild(li);
           }
         }
@@ -84,7 +90,7 @@ const ENDPOINT = `https://api.brotea.dev/roadmap?project=${PROJECT_SLUG}`;
           status.hidden = true;
           columns.hidden = false;
         } catch {
-          status.textContent = 'The roadmap is not available right now — please check back later.';
+          status.textContent = root.dataset.msgError;
         }
       })();
     </script>
@@ -92,21 +98,21 @@ const ENDPOINT = `https://api.brotea.dev/roadmap?project=${PROJECT_SLUG}`;
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; font-family: var(--font-sans); color: var(--text); background: var(--bg); }
-      main { max-width: 960px; margin: 0 auto; padding: 4rem 1.5rem; }
-      .hero h1 { font-size: 2.5rem; margin: 0 0 .5rem; }
+      main { max-width: 960px; margin: 0 auto; padding: 4rem var(--space-4); }
+      .hero h1 { font-family: var(--font-display); font-size: 2.5rem; margin: 0 0 .5rem; }
       .hero p { font-size: 1.15rem; color: var(--muted); }
-      .hero a { color: #1a7f37; }
-      .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 2rem; }
+      .hero a { color: var(--primary); }
+      .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); margin-top: var(--space-5); }
       .columns[hidden] { display: none; }
-      .column { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+      .column { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); }
       .column h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
       .column ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
       /* Items are created client-side, so they lack Astro's scope attribute —
          these rules must be global to reach them. */
-      .column :global(li) { border: 1px solid #eee; border-radius: var(--radius); padding: .75rem; background: var(--bg); }
+      .column :global(li) { border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem; background: var(--bg); }
       .column :global(li p) { margin: .35rem 0 0; font-size: .9rem; color: var(--muted); }
-      .column :global(li.empty) { border-style: dashed; color: #888; font-size: .9rem; }
-      [data-status="shipped"] h2 { color: #1a7f37; }
+      .column :global(li.empty) { border-style: dashed; color: var(--muted); font-size: .9rem; }
+      [data-status="shipped"] h2 { color: var(--ok); }
       #roadmap-status { color: var(--muted); }
     </style>
   </body>

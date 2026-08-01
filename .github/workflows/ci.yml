@@ -14,7 +14,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: npm test
       # The form is dead if the endpoint is not inlined into the bundle at
       # build time (feature 13). A green build alone never caught that.
       - name: Assert the requirements endpoint is baked into the bundle
