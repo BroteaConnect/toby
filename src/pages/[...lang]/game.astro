@@ -39,7 +39,7 @@ const PROJECT_NAME = 'Toby';
     </main>
 
     <script>
-      const canvas = document.getElementById('game');
+      const canvas = document.getElementById('game') as HTMLCanvasElement;
       const ctx = canvas.getContext('2d');
 
       // Fixed internal (logical) resolution — physics live in these units.

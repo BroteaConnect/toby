@@ -77,9 +77,11 @@ const ENDPOINT = import.meta.env.PUBLIC_REQUIREMENTS_ENDPOINT?.trim() || DEFAULT
     </main>
 
     <script>
-      const form = document.getElementById('requirements-form');
+      // tipado explícito: getElementById devuelve HTMLElement, y sin esto
+      // `form.reset()` y `new FormData(form)` no compilan (astro check)
+      const form = document.getElementById('requirements-form') as HTMLFormElement;
       const status = document.getElementById('form-status');
-      const button = form?.querySelector('button[type="submit"]');
+      const button = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
       form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!status) return;
