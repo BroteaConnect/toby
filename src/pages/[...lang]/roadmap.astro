@@ -51,12 +51,14 @@ const COLUMNS = ['planned', 'in_progress', 'shipped'] as const;
     </main>
 
     <script>
-      const root = document.getElementById('roadmap');
-      const status = document.getElementById('roadmap-status');
-      const columns = root.querySelector('.columns');
+      // Tipado explícito: getElementById devuelve HTMLElement|null y
+      // querySelector devuelve Element, que no tiene dataset ni hidden.
+      const root = document.getElementById('roadmap') as HTMLElement;
+      const status = document.getElementById('roadmap-status') as HTMLElement;
+      const columns = root.querySelector('.columns') as HTMLElement;
 
       function render(items) {
-        const cols = [...columns.querySelectorAll('.column')];
+        const cols = [...columns.querySelectorAll<HTMLElement>('.column')];
         for (const item of items) {
           const list = cols.find((c) => c.dataset.status === item.status)?.querySelector('ul');
           if (!list) continue;
@@ -71,7 +73,7 @@ const COLUMNS = ['planned', 'in_progress', 'shipped'] as const;
           }
           list.appendChild(li);
         }
-        for (const col of columns.querySelectorAll('.column')) {
+        for (const col of columns.querySelectorAll<HTMLElement>('.column')) {
           if (!col.querySelector('li')) {
             const li = document.createElement('li');
             li.className = 'empty';
