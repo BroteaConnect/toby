@@ -4,9 +4,9 @@ Landing page with a requirements form and a public roadmap, generated
 from Brotea's `landing-astro` template.
 
 ## Template placeholders (replaced by the new-project skill)
-- `__PROJECT_NAME__` — human-readable project name
-- `__PROJECT_SLUG__` — kebab-case slug (also the repo name)
-- `__PROJECT_DESCRIPTION__` — one-sentence idea/description
+- `Toby` — human-readable project name
+- `toby` — kebab-case slug (also the repo name)
+- `Toby` — one-sentence idea/description
 - `project-slug-placeholder` — same slug, used in machine-validated name
   fields (package.json) where leading underscores are illegal
 
